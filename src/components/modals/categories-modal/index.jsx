@@ -1,33 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Modal, Form, Input, Button } from 'antd';
-import { useEffect } from 'react';
 import { category } from '@service';
 
-const CategoriesModal = ({ visible, onOk, handleClose, update, getData }) => {
+const CategoriesModal = ({ visible, handleClose, update, getData }) => {
     const [form] = Form.useForm();
+
     useEffect(() => {
         if (update) {
             form.setFieldsValue({
                 name: update.name,
-            })
+            });
         } else {
-            form.resetFields()
+            form.resetFields();
         }
-    })
+    }, [update]); // Ensure to add update as a dependency
 
     const onFinish = async (values) => {
         console.log('Received values of form: ', values);
         try {
             if (update?.id) {
-                await category.update(update.id, { values });
-                console.log(update);
-                handleClose()
-
-                getData()
+                await category.update(update.id, values); // Correctly pass values
+                handleClose();
+                getData();
             } else {
                 await category.create(values);
-                getData()
-                handleClose()
+                getData();
+                handleClose();
             }
         } catch (error) {
             console.log(error);
@@ -38,17 +36,13 @@ const CategoriesModal = ({ visible, onOk, handleClose, update, getData }) => {
         <Modal
             title="Add New Category"
             open={visible}
-            onOk={onOk}
             onCancel={handleClose}
             footer={null}
         >
             <Form
                 form={form}
                 name="category_form"
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                }}
+                style={{ display: "flex", flexDirection: "column" }}
                 onFinish={onFinish}
             >
                 <Form.Item
@@ -57,12 +51,7 @@ const CategoriesModal = ({ visible, onOk, handleClose, update, getData }) => {
                     labelCol={{ span: 24 }}
                     wrapperCol={{ span: 24 }}
                     style={{ marginBottom: '8px' }}
-                    rules={[
-                        {
-                            required: true,
-                            message: 'Enter category name!',
-                        },
-                    ]}
+                    rules={[{ required: true, message: 'Enter category name!' }]}
                 >
                     <Input style={{ height: "40px" }} />
                 </Form.Item>

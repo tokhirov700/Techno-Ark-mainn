@@ -21,7 +21,6 @@ const Index = () => {
         page: 1
     })
 
-    //========= get from query =========
 
     useEffect(() => {
         const params = new URLSearchParams(search)

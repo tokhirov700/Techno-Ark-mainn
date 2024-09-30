@@ -22,19 +22,19 @@ const App = () => {
     <Layout>
       <Sider trigger={null} collapsible collapsed={collapsed} width={260}>
         <div className="demo-logo-vertical" />
-        {/* Logotipni collapse holatiga qarab o'zgartirish */}
+  
         <div className='flex p-4 gap-2 font-semibold mb-2'>
           <img
             src={MainLogo}
             alt="main-logo"
             style={{
-              width: collapsed ? '30px' : '70px', // O'lchamni kichikroq qildik
+              width: collapsed ? '30px' : '70px', 
               transition: 'width 0.3s ease',
             }}
           />
-          {/* Logotip yozuvi collapse bo'lganda yashiriladi */}
+    
           {!collapsed && (
-            <span className='text-[18px] text-[#fff] flex'>Techno Ark</span> // Yozuv hajmini ham moslashtirish
+            <span className='text-[18px] text-[#fff] flex'>Techno Ark</span> 
           )}
         </div>
 
@@ -45,7 +45,7 @@ const App = () => {
         >
           {adminRights?.map((item) => (
             <Item key={item.path} icon={item.icon}>
-              <NavLink to={item.path} style={{ fontSize: "16px" }}>{item.label}</NavLink> {/* Font hajmi ham moslashtirilgan */}
+              <NavLink to={item.path} style={{ fontSize: "16px" }}>{item.label}</NavLink> 
             </Item>
           ))}
         </Menu>
