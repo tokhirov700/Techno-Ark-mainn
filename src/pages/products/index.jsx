@@ -1,18 +1,71 @@
 import  { useEffect, useState } from "react";
-import { GlobalTable } from '@components';
-import { products } from '@service';
-import { Drawer, Button, Form, Input } from 'antd';
+import { Button, Input, Space, } from 'antd';
+import { EditOutlined, } from '@ant-design/icons';
+import { useNavigate,  useLocation } from 'react-router-dom'
+import { GlobalTable, } from '@components';
+import { ProductsModal } from '@modals'
+import { brandCategory, brands, category, products } from '@service';
+import { ConfirmDelete } from '@confirmation';
 
 const Index = () => {
+    
     const [data, setData] = useState([]);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false); 
-    const [form] = Form.useForm(); 
+    const [open, setOpen] = useState(false);
+    const [update, setUpdate] = useState({});
+    const [total, setTotal] = useState();
+    const [brand, setBrand] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [brandCategories, setBrandCategories] = useState([]);
+    const { search } = useLocation()
+    const navigate = useNavigate()
+    const [params, setParams] = useState({
+        search: "",
+        limit: 2,
+        page: 1
+    })
+    const showDrawer = () => {
+        setOpen(true);
+    };
+    const onClose = () => {
+        setOpen(false);
+    };
+
+
+    useEffect(() => {
+        const params = new URLSearchParams(search)
+        let page = Number(params.get("page")) || 1
+        let limit = Number(params.get("limit")) || 2
+        setParams((prev) => ({
+            ...prev,
+            limit: limit,
+            page: page,
+        }))
+    }, [search])
+
+
+
+    const handleTableChange = (pagination) => {
+        const { current, pageSize } = pagination
+        setParams((prev) => ({
+            ...prev,
+            limit: pageSize,
+            page: current,
+        })
+        )
+        const searchParams = new URLSearchParams(search)
+        searchParams.set("page", `${current}`)
+        searchParams.set('limit', `${pageSize}`)
+        navigate(`?${searchParams}`)
+    }
+
 
     const getData = async () => {
         try {
-            const res = await products.get();
+            const res = await products.get(params);
             if (res.status === 200) {
                 setData(res?.data?.data?.products);
+                setTotal(res?.data?.data?.count)
+
             }
         } catch (error) {
             console.log(error);
@@ -21,84 +74,138 @@ const Index = () => {
 
     useEffect(() => {
         getData();
-    }, []);
+    }, [params]);
 
-    const showDrawer = () => {
-        setIsDrawerOpen(true);
+ 
+    const editData = (item) => {
+        setUpdate(item);
+        showModal()
+    
+
     };
 
-    const onClose = () => {
-        setIsDrawerOpen(false);
-        form.resetFields(); 
+
+
+    const deleteData = async (id) => {
+        const res = await products.delete(id);
+        if (res.status === 200) {
+            getData();
+        }
     };
 
-    const onFinish = async (values) => {
+    const getBrands = async () => {
         try {
-            const res = await products.create(values); 
-            if (res.status === 200) {
-                getData(); 
-                onClose(); 
-            }
+            const res = await brands.get(params);
+            const fetchedData = res?.data?.data?.brands;
+            setBrand(fetchedData);
+            console.log(brand);
+
         } catch (error) {
             console.log(error);
         }
     };
 
+    useEffect(() => {
+        getBrands();
+    }, [params]);
+
+
+    const getCategories = async () => {
+        try {
+            const res = await category.get(params);
+            const fetchedData = res?.data?.data?.categories;
+            setCategories(fetchedData);
+
+
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getCategories();
+    }, [params]);
+
+  
+    const getBrandCategories = async () => {
+        try {
+            const res = await brandCategory.get(params);
+            const fetchedData = res?.data?.data?.brandCategories;
+            setBrandCategories(fetchedData);
+        
+
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        getBrandCategories();
+    }, [params]);
+
     const columns = [
         {
-            title: 'Name',
+            title: '№',
+            dataIndex: 'id',
+        },
+        {
+            title: 'Product name',
             dataIndex: 'name',
+        },
+        {
+            title: 'Date',
+            dataIndex: 'createdAt',
+        },
+        {
+            title: 'Action',
+            key: 'action',
+            render: (_, record) => (
+                <Space size="middle">
+                    <Button onClick={() => editData(record)}><EditOutlined /></Button>
+                    <ConfirmDelete
+                        id={record.id}
+                        onConfirm={deleteData}
+                        onCancel={() => console.log('Cancelled')}
+                        title={"Delete this Product ?"}
+                    />
+                </Space>
+            ),
         },
     ];
 
     return (
         <>
+            <ProductsModal
+                onClose={onClose}
+                open={open}
+                getData={getData}
+                update={update}
+                brand={brand}
+                categories={categories}
+                brandCategories={brandCategories}
+
+            />
             <div className="flex items-center justify-between py-4">
                 <Input placeholder="Search Categories" size="large" style={{ maxWidth: 260, minWidth: 20 }} />
-                <div className="flex gap-2 items-center">
-                    <Button type="primary" size="large" style={{ maxWidth: 160, minWidth: 20, backgroundColor: "orangered" }} onClick={showDrawer}>
+                <div className="flex gap-2 items-center ">
+                    <Button type="primary" size="large" style={{ maxWidth: 160, minWidth: 20, backgroundColor: "orangered" }} onClick={showDrawer} >
                         Create
                     </Button>
+
                 </div>
             </div>
-
-            <Drawer
-                title="Create a new product"
-                width={660}
-                onClose={onClose}
-                open={isDrawerOpen}
-                bodyStyle={{ paddingBottom: 80 }}
-            >
-                <Form form={form} layout="vertical" onFinish={onFinish}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '5px' }}>
-                        <Form.Item
-                            name="name"
-                            label="Product Name"
-                            rules={[{ required: true, message: 'Please enter product name!' }]}
-                            style={{ width: '100%'  }}
-                        >
-                            <Input style={{padding: '10px', fontSize: '16px'}} placeholder="Enter product name" />
-                        </Form.Item>
-                        <Form.Item
-                            name="category_id"
-                            label="Product Category"
-                            rules={[{ required: true, message: 'Please enter product category!' }]}
-                            style={{ width: '100%' }}
-                        >
-                            <Input style={{padding: '10px' , fontSize: '16px'}} placeholder="Enter product category" />
-                        </Form.Item>
-                    </div>
-
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit" size="large" block style={{ backgroundColor: '#e35112' }}>
-                            Submit
-                        </Button>
-                    </Form.Item>
-                </Form>
-            </Drawer>
-
-            {/* GlobalTable */}
-            <GlobalTable data={data} columns={columns} />
+            <GlobalTable
+                data={data}
+                columns={columns}
+                handleChange={handleTableChange}
+                pagination={{
+                    current: params.page,
+                    pageSize: params.limit,
+                    total: total,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['2', '3', '4', '6',]
+                }}
+            />
         </>
     );
 };
