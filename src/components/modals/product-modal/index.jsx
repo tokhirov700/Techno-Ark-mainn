@@ -24,15 +24,12 @@ const Index = ({ open, onClose, update, getData, brand, categories, brandCategor
         }
     });
 
-    //========= filter brands ============
 
     const handleCategoryChange = (category_id) => {
         const relatedBrands = brand?.filter((item => item.category_id === category_id))
         setFilteredBrands(relatedBrands)
 
     }
-
-    //========= filter category brands ============
 
     const handleBrandChange = (brand_id) => {
         const relatedBrandCategories = brandCategories?.filter((item => item.brand_id === brand_id))
